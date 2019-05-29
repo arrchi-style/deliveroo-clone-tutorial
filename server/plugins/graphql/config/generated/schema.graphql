@@ -75,7 +75,7 @@ type Dish {
   description: String
   image: UploadFile
   price: Int
-  restaurant: UsersPermissionsPermission
+  restaurant: Restaurant
 }
 
 input DishInput {
@@ -111,6 +111,7 @@ input editRestaurantInput {
   name: String
   description: String
   image: ID
+  dishes: [ID]
 }
 
 input editRoleInput {
@@ -211,12 +212,14 @@ type Restaurant {
   name: String
   description: String
   image: UploadFile
+  dishes(sort: String, limit: Int, start: Int, where: JSON): [Dish]
 }
 
 input RestaurantInput {
   name: String
   description: String
   image: ID
+  dishes: [ID]
 }
 
 input RoleInput {
@@ -317,7 +320,6 @@ type UsersPermissionsPermission {
   enabled: Boolean!
   policy: String
   role: UsersPermissionsRole
-  dishes(sort: String, limit: Int, start: Int, where: JSON): [Dish]
 }
 
 type UsersPermissionsRole {

@@ -15,7 +15,9 @@ module.exports = {
 
   // Before fetching a value.
   // Fired before a `fetch` operation.
-  // beforeFetch: async (model, columns, options) => {},
+  beforeFetch: async (model, columns, options) => {
+    console.log('beforeFetch', model, columns, options)
+  },
 
   // After fetching a value.
   // Fired after a `fetch` operation.

@@ -14,6 +14,32 @@ const _ = require('lodash');
 const utils = require('strapi-hook-bookshelf/lib/utils/');
 const { convertRestQueryParams, buildQuery } = require('strapi-utils');
 
+var redis = require('redis');
+var client = redis.createClient();
+
+client.on('connect', function () {
+  console.log('Redis client connected');
+});
+
+client.on('error', function (err) {
+  console.log('Something went wrong ' + err);
+});
+
+//Its not working yet
+function getCache(req, res, next) {
+  console.log('getCache Working');
+  // const org = req.query.org;
+  // client.get(org, function (err, data) {
+  //     if (err) throw err;
+
+  //     console.log('getCache --- > ', data)
+  //     if (data != null) {
+  //         return res.send(respond(org, data));
+  //     } else {
+  //         return null;
+  //     }
+  // });
+}
 
 module.exports = {
 
@@ -23,17 +49,57 @@ module.exports = {
    * @return {Promise}
    */
 
+
   fetchAll: (params, populate) => {
     // Select field to populate.
+
     const withRelated = populate || Restaurant.associations
       .filter(ast => ast.autoPopulate !== false)
       .map(ast => ast.alias);
 
     const filters = convertRestQueryParams(params);
+    // console.log('Write DATA');
 
-    return Restaurant.query(buildQuery({ model: Restaurant, filters }))
+    let data = Restaurant.query(buildQuery({ model: Restaurant, filters }))
       .fetchAll({ withRelated })
       .then(data => data.toJSON());
+
+    let restaurants;
+    data.then(function (result) {
+      restaurants = result;
+      // console.log('Restaurants -- > ', restaurants);
+
+      //set images to Redis
+      restaurants.forEach(element => {
+        console.log('ELEMENT---> ', element.id, element.image)
+        client.set(element.id, element.image, redis.print);
+      });
+
+      //get images from redis
+      restaurants.forEach(element => {
+        client.get(element.id, function (error, result) {
+          if (error) {
+            console.log(error);
+            throw error;
+          }
+          // console.log('GET result ->' + result);
+        });
+      });
+
+    });
+
+
+
+    // client.set(data._bitField, data, redis.print);
+    // client.get(data._bitField, function (error, result) {
+    //   if (error) {
+    //     console.log(error);
+    //     throw error;
+    //   }
+    //   console.log('GET result ->' + result);
+    // });
+
+    return data;
   },
 
   /**
@@ -81,7 +147,7 @@ module.exports = {
     const entry = await Restaurant.forge(data).save();
 
     // Create relational data and return the entry.
-    return Restaurant.updateRelations({ id: entry.id , values: relations });
+    return Restaurant.updateRelations({ id: entry.id, values: relations });
   },
 
   /**
@@ -207,3 +273,4 @@ module.exports = {
     });
   }
 };
+

@@ -74,3 +74,14 @@ export default {
   }
 }
 </script>
+
+<style>
+  .card-img-top {
+    height: 200px;
+    width: 97%;
+    object-fit: cover;
+    margin: 5px auto;
+    display: block;
+    border-radius: 5px;
+  }
+</style>

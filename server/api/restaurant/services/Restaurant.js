@@ -95,7 +95,7 @@ module.exports = {
             client.set('http://localhost:1337/restaurants', jsonData, redis.print);
 
             //give an expiration time to an existing key 
-            client.expire('http://localhost:1337/restaurants', 5);
+            client.expire('http://localhost:1337/restaurants', 900);
 
             console.log('STRAPI', data);
 

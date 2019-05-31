@@ -18,6 +18,7 @@ module.exports = {
     if (ctx.query._q) {
       return strapi.services.restaurant.search(ctx.query);
     } else {
+      // console.log('DAtA IN CONTROLLER ---> ', strapi.services.restaurant.fetchAll(ctx.query, populate))
       return strapi.services.restaurant.fetchAll(ctx.query, populate);
     }
   },

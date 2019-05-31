@@ -67,7 +67,7 @@ module.exports = {
     //   .fetchAll({ withRelated })
     //   .then(data => data.toJSON());
 
-    return new Promise((res, rej) =>{
+    return new Promise((res, rej) => {
       client.get('http://localhost:1337/restaurants', async (error, result) => {
         try {
           if (error) {
@@ -79,32 +79,37 @@ module.exports = {
 
             // Select field to populate.
             const withRelated = populate || await Restaurant.associations
-                .filter(ast => ast.autoPopulate !== false)
-                .map(ast => ast.alias);
+              .filter(ast => ast.autoPopulate !== false)
+              .map(ast => ast.alias);
 
             const filters = convertRestQueryParams(params);
 
             let data = await Restaurant.query(buildQuery({ model: Restaurant, filters }))
-                .fetchAll({ withRelated });
-
-
+              .fetchAll({ withRelated });
             data.toJSON();
-            console.log('Data returns from STRAPI', data);
+
+            //need to stringify obj before send to redis
+            let jsonData = JSON.stringify(data);
+            // console.log('jsonData ---> ', jsonData);
+
+            client.set('http://localhost:1337/restaurants', jsonData, redis.print);
+
+            //give an expiration time to an existing key 
+            client.expire('http://localhost:1337/restaurants', 5);
+
+            console.log('STRAPI', data);
 
             return res(data);
-
           }
 
-          console.log('Data returns from Redis');
-          return res(result);
+          console.log('REDIS');
 
+          return res(result);
 
         } catch (err) {
           console.log(err);
-          return  err;
+          return err;
         }
-
-
       });
     })
 

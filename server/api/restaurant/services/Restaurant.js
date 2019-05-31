@@ -51,55 +51,64 @@ module.exports = {
 
 
   fetchAll: (params, populate) => {
-    // Select field to populate.
 
-    const withRelated = populate || Restaurant.associations
-      .filter(ast => ast.autoPopulate !== false)
-      .map(ast => ast.alias);
+    //   // Select field to populate.
+    //   const withRelated = populate || Restaurant.associations
+    //   .filter(ast => ast.autoPopulate !== false)
+    //   .map(ast => ast.alias);
 
-    const filters = convertRestQueryParams(params);
-    // console.log('Write DATA');
+    // const filters = convertRestQueryParams(params);
 
-    let data = Restaurant.query(buildQuery({ model: Restaurant, filters }))
-      .fetchAll({ withRelated })
-      .then(data => data.toJSON());
+    // console.log('Result', Restaurant.query(buildQuery({ model: Restaurant, filters }))
+    // .fetchAll({ withRelated })
+    // .then(data => data.toJSON()))
 
-    let restaurants;
-    data.then(function (result) {
-      restaurants = result;
-      // console.log('Restaurants -- > ', restaurants);
+    // return Restaurant.query(buildQuery({ model: Restaurant, filters }))
+    //   .fetchAll({ withRelated })
+    //   .then(data => data.toJSON());
 
-      //set images to Redis
-      restaurants.forEach(element => {
-        console.log('ELEMENT---> ', element.id, element.image)
-        client.set(element.id, element.image, redis.print);
-      });
-
-      //get images from redis
-      restaurants.forEach(element => {
-        client.get(element.id, function (error, result) {
+    return new Promise((res, rej) =>{
+      client.get('http://localhost:1337/restaurants', async (error, result) => {
+        try {
           if (error) {
-            console.log(error);
-            throw error;
+            return res(error);
           }
-          // console.log('GET result ->' + result);
-        });
+
+          if (result === null) {
+            //if we dont have data in radis take it from strapi
+
+            // Select field to populate.
+            const withRelated = populate || await Restaurant.associations
+                .filter(ast => ast.autoPopulate !== false)
+                .map(ast => ast.alias);
+
+            const filters = convertRestQueryParams(params);
+
+            let data = await Restaurant.query(buildQuery({ model: Restaurant, filters }))
+                .fetchAll({ withRelated });
+
+
+            data.toJSON();
+            console.log('Data returns from STRAPI', data);
+
+            return res(data);
+
+          }
+
+          console.log('Data returns from Redis');
+          return res(result);
+
+
+        } catch (err) {
+          console.log(err);
+          return  err;
+        }
+
+
       });
-
-    });
-
+    })
 
 
-    // client.set(data._bitField, data, redis.print);
-    // client.get(data._bitField, function (error, result) {
-    //   if (error) {
-    //     console.log(error);
-    //     throw error;
-    //   }
-    //   console.log('GET result ->' + result);
-    // });
-
-    return data;
   },
 
   /**

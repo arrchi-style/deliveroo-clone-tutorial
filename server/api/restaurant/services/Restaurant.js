@@ -74,31 +74,40 @@ module.exports = {
             return res(error);
           }
 
-          if (result === null) {
-            //if we dont have data in radis take it from strapi
+          client.ttl('http://localhost:1337/restaurants', function (err, data) {
+            console.log('TTL ---> ', data);
+          });
 
-            // Select field to populate.
-            const withRelated = populate || await Restaurant.associations
-              .filter(ast => ast.autoPopulate !== false)
-              .map(ast => ast.alias);
+          if (result === null && data > 0) {
+            try {
+              //if we dont have data in radis take it from strapi
 
-            const filters = convertRestQueryParams(params);
+              // Select field to populate.
+              const withRelated = populate || await Restaurant.associations
+                .filter(ast => ast.autoPopulate !== false)
+                .map(ast => ast.alias);
 
-            let data = await Restaurant.query(buildQuery({ model: Restaurant, filters }))
-              .fetchAll({ withRelated });
-            data.toJSON();
+              const filters = convertRestQueryParams(params);
 
-            //need to stringify obj before send to redis
-            let jsonData = JSON.stringify(data);
-            // console.log('jsonData ---> ', jsonData);
+              let data = await Restaurant.query(buildQuery({ model: Restaurant, filters }))
+                .fetchAll({ withRelated });
+              data.toJSON();
 
-            client.set('http://localhost:1337/restaurants', jsonData, redis.print);
 
-            //give an expiration time to an existing key 
-            client.expire('http://localhost:1337/restaurants', 900);
+              //need to stringify obj before send to redis
+              let jsonData = JSON.stringify(data);
+              // console.log('jsonData ---> ', jsonData);
 
-            console.log('STRAPI', data);
+              client.set('http://localhost:1337/restaurants', jsonData, redis.print);
 
+              //give an expiration time to an existing key 
+              client.expire('http://localhost:1337/restaurants', 900);
+
+              console.log('STRAPI', data);
+            }
+            catch{
+              //need to take data if something wrong with strapi
+            }
             return res(data);
           }
 

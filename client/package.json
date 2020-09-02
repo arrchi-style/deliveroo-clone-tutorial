@@ -13,7 +13,7 @@
     "precommit": "npm run lint"
   },
   "dependencies": {
-    "bootstrap-vue": "^2.0.0-rc.10",
+    "bootstrap-vue": "^2.0.0-rc.12",
     "nuxt": "^2.0.0",
     "strapi-sdk-javascript": "^0.3.1"
   },
